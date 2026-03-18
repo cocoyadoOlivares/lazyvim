@@ -84,6 +84,9 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
+-- Configure git to use merge strategy on pull (not rebase)
+vim.fn.jobstart { 'git', 'config', '--global', 'pull.rebase', 'false' }
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -164,12 +167,18 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- Auto-read files when changed outside of Neovim
+vim.o.autoread = true
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+-- jj in normal mode to enter insert mode
+vim.keymap.set('n', 'jj', 'i', { desc = 'Enter insert mode' })
 
 -- Diagnostic Config & Keymaps
 -- See :help vim.diagnostic.Opts
@@ -228,6 +237,24 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function() vim.hl.on_yank() end,
+})
+
+-- Reload buffers when files change on disk
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI' }, {
+  desc = 'Reload buffer when file changes outside of neovim',
+  group = vim.api.nvim_create_augroup('auto-reload', { clear = true }),
+  callback = function()
+    if vim.fn.mode() ~= 'c' then vim.cmd 'checktime' end
+  end,
+})
+
+-- Auto-fix ESLint on save for JS/TS files
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = { '*.js', '*.jsx', '*.ts', '*.tsx' },
+  callback = function()
+    local clients = vim.lsp.get_clients { bufnr = 0, name = 'eslint' }
+    if #clients > 0 then vim.cmd 'EslintFixAll' end
+  end,
 })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
@@ -777,7 +804,7 @@ require('lazy').setup({
         -- <c-k>: Toggle signature help
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
-        preset = 'default',
+        preset = 'super-tab',
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -928,7 +955,7 @@ require('lazy').setup({
   --
   -- require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
