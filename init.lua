@@ -177,9 +177,6 @@ vim.o.autoread = true
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
--- jj in normal mode to enter insert mode
-vim.keymap.set('n', 'jj', 'i', { desc = 'Enter insert mode' })
-
 -- Diagnostic Config & Keymaps
 -- See :help vim.diagnostic.Opts
 vim.diagnostic.config {
